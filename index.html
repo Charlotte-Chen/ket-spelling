@@ -29,8 +29,8 @@ const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 Object.assign(DATA.phonics,DATA.rules);Object.assign(DATA.topics,DATA.other);const RULES=Object.keys(DATA.phonics),TOPICS=Object.keys(DATA.topics),RG=Object.keys(DATA.rules),OG=Object.keys(DATA.other),TG=TOPICS.filter(t=>!OG.includes(t));
 const W=w=>S.w[w]||(S.w[w]={st:'new',k:0,due:0});
 function say(t,cb){const u=new SpeechSynthesisUtterance(t);u.rate=0.7;const v=speechSynthesis.getVoices().find(v=>/en[-_](US|GB)/i.test(v.lang));if(v)u.voice=v;u.lang=v?v.lang:'en-US';if(cb)u.onend=()=>setTimeout(cb,700);speechSynthesis.speak(u)}
-function speak(w){try{speechSynthesis.cancel();const s=SENT[w];if(!s)return say(w);say(w,()=>say(s,()=>say(w)))}catch(e){alert('此裝置不支援語音')}}
-function speakS(w){try{speechSynthesis.cancel();say(SENT[w]||w)}catch(e){}}
+const SLUG=w=>w.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');let AUD=null,SPK=0;function pf(src,fb,id){return new Promise(r=>{if(id!==SPK)return r();const a=new Audio(src);AUD=a;let d=0;const ok=()=>{if(!d){d=1;r()}};const bad=()=>{if(!d){d=1;try{say(fb,()=>r())}catch(e){r()}}};a.onended=ok;a.onerror=bad;a.play().catch(bad)})}const gap=()=>new Promise(r=>setTimeout(r,500));async function speak(w){const id=++SPK;try{speechSynthesis.cancel()}catch(e){}if(AUD)AUD.pause();const s=SLUG(w);await pf('audio/w/'+s+'.mp3',w,id);if(!SENT[w])return;await gap();await pf('audio/s/'+s+'.mp3',SENT[w],id);await gap();await pf('audio/w/'+s+'.mp3',w,id)}async function speakS(w){const id=++SPK;try{speechSynthesis.cancel()}catch(e){}if(AUD)AUD.pause();await pf(SENT[w]?'audio/s/'+SLUG(w)+'.mp3':'audio/w/'+SLUG(w)+'.mp3',SENT[w]||w,id)}
+
 const isPh=w=>RULES.some(r=>DATA.phonics[r].includes(w));
 const ketAll=[...new Set(TOPICS.flatMap(t=>DATA.topics[t]))];const nAll=new Set([...ketAll,...RULES.flatMap(r=>DATA.phonics[r])]).size;
 function pickToday(force){
